@@ -1,4 +1,4 @@
-package RealEstate
+package realEstate
 
 class RealEstateInvest {
     fun getInfo(){

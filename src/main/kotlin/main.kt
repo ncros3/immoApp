@@ -1,4 +1,4 @@
-import RealEstate.RealEstateInvest
+import realEstate.RealEstateInvest
 
 fun main(args: Array<String>) {
     println("Hello World!")
