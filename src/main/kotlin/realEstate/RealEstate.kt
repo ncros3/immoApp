@@ -41,7 +41,7 @@ data class HouseOutput(
 )
 
 class FundingOutput(
-        val loanInterest: Array<Double>,
+        val loanInterest: Array<Double?>,
         val loanRent: Double
 )
 
@@ -74,14 +74,31 @@ class RealEstate(
         val loanAmount: Double = totalCost - house.inputCapital
         val loanRent: Double = loanAmount * funding.loanRate/12/100 / (1-(1 + funding.loanRate/12/100).pow(-12*funding.loanDuration))
 
-        println(totalCost)
-        println(loanAmount)
-        println(loanRent)
+        // Declare interest Array
+        var loanInterest: Array<Double?> = arrayOfNulls(funding.loanDuration)
+        // intermediate values
+        var capitalToPay: Double = loanAmount
+        var depreciation: Double = 1.0
+        // compute interest for each year
+        for (i in 0 until funding.loanDuration) {
+            //Compute capital to pay for this year
+            if (i>0){
+                depreciation = loanRent*12 - loanInterest[i-1]!!
+                capitalToPay -= depreciation
+            }
+            // compute interest
+            loanInterest[i] = funding.loanRate / 100 * capitalToPay
+        }
 
+        //
+        fundingOutput = FundingOutput(loanInterest, loanRent)
     }
 
     private fun chargesCalc(){
-        // to implement
+        // calculate charges for each year
+        for (i in 0 until funding.loanDuration){
+
+        }
     }
 
     fun metrics(){
