@@ -19,17 +19,12 @@ data class Funding(
 )
 
 data class Charges(
-        val condominiumCost: Int,
-        val insurance: Int,
-        val electricity: Int,
-        val works: Int,
-        val realEstateTaxes: Int,
+        val condominiumCost: Double,
+        val insurance: Double,
+        val electricity: Double,
+        val works: Double,
+        val realEstateTaxes: Double,
         val rentManagingCost: Double
-)
-
-data class Taxes(
-        val marginalRate: Int,
-        val taxationRegime: String
 )
 
 /* ****************************************************************** */
@@ -41,7 +36,7 @@ data class HouseOutput(
 )
 
 class FundingOutput(
-        val loanInterest: Array<Double?>,
+        val loanInterest: Array<Double>,
         val loanRent: Double
 )
 
@@ -58,9 +53,12 @@ class RealEstate(
     private lateinit var houseOutput: HouseOutput
     private lateinit var fundingOutput: FundingOutput
 
+    private lateinit var taxesCompute: TaxesCompute
+
     // declare private variables
     private val notaryCost: Double = 0.08
     private val totalCost: Double = house.houseCost*(1+notaryCost) + house.works
+    private var totalCharges: Double = 0.0
 
     private fun houseCalc(){
         // calculate turnover and grossReturn
@@ -75,10 +73,10 @@ class RealEstate(
         val loanRent: Double = loanAmount * funding.loanRate/12/100 / (1-(1 + funding.loanRate/12/100).pow(-12*funding.loanDuration))
 
         // Declare interest Array
-        var loanInterest: Array<Double?> = arrayOfNulls(funding.loanDuration)
+        var loanInterest: Array<Double> = Array(funding.loanDuration){0.0}
         // intermediate values
         var capitalToPay: Double = loanAmount
-        var depreciation: Double = 1.0
+        var depreciation: Double
         // compute interest for each year
         for (i in 0 until funding.loanDuration) {
             //Compute capital to pay for this year
@@ -90,23 +88,21 @@ class RealEstate(
             loanInterest[i] = funding.loanRate / 100 * capitalToPay
         }
 
-        //
+        // create output object with computed values
         fundingOutput = FundingOutput(loanInterest, loanRent)
     }
 
     private fun chargesCalc(){
         // calculate charges for each year
-        for (i in 0 until funding.loanDuration){
-
-        }
+        totalCharges = charges.works + charges.realEstateTaxes + charges.insurance + charges.condominiumCost + charges.electricity + (charges.rentManagingCost * houseOutput.turnover)
     }
 
-    fun metrics(){
+    fun compute(){
         houseCalc()
         fundingCalc()
         chargesCalc()
 
-
-        println("Real Estate Invest Metrics")
+        taxesCompute = TaxesCompute(taxes, totalCharges, fundingOutput, houseOutput)
+        taxesCompute.start()
     }
 }
