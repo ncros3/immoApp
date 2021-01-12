@@ -12,5 +12,4 @@ fun main(args: Array<String>) {
     project.compute()
     // print result
     project.result()
-    // plot result
 }
