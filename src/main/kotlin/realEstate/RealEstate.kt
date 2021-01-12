@@ -53,12 +53,17 @@ class RealEstate(
     private lateinit var houseOutput: HouseOutput
     private lateinit var fundingOutput: FundingOutput
 
-    private lateinit var taxesCompute: TaxesCompute
-
     // declare private variables
     private val notaryCost: Double = 0.08
     private val totalCost: Double = house.houseCost*(1+notaryCost) + house.works
     private var totalCharges: Double = 0.0
+    private lateinit var taxesCompute: TaxesCompute
+
+    // output metrics
+    private var cashFlow: Array<Double> = Array(funding.loanDuration){0.0}
+    private var netReturn: Array<Double> = Array(funding.loanDuration){0.0}
+    private var netRentability: Array<Double> = Array(funding.loanDuration){0.0}
+    private var netResult: Array<Double> = Array(funding.loanDuration){0.0}
 
     private fun houseCalc(){
         // calculate turnover and grossReturn
@@ -97,12 +102,38 @@ class RealEstate(
         totalCharges = charges.works + charges.realEstateTaxes + charges.insurance + charges.condominiumCost + charges.electricity + (charges.rentManagingCost * houseOutput.turnover)
     }
 
+    private fun metrics(){
+        // compute metrics for each year of loan
+        for(index in 0 until funding.loanDuration){
+            // compute cash flow
+            cashFlow[index] = houseOutput.turnover - totalCharges - fundingOutput.loanRent*12 - taxesCompute.taxesArray[index]
+            // compute net result & return
+            netResult[index] = houseOutput.turnover - totalCharges - taxesCompute.taxesArray[index] - fundingOutput.loanInterest[index]
+            netReturn[index] = netResult[index] / houseOutput.turnover * 100
+            // compute net financial rentability
+            netRentability[index] = netResult[index] / house.inputCapital * 100
+        }
+    }
+
+    fun result(){
+        println("Cash Flow : ${cashFlow[0]}")
+        println("Gross return : ${houseOutput.grossReturn}")
+        println("Net Result : ${netResult[0]}")
+        println("Net Return : ${netReturn[0]}")
+        println("Net Rentability : ${netRentability[0]}")
+    }
+
     fun compute(){
+        // compute investment parameters : total cost, funding, charges...
         houseCalc()
         fundingCalc()
         chargesCalc()
 
+        // compute taxes
         taxesCompute = TaxesCompute(taxes, totalCharges, fundingOutput, houseOutput)
         taxesCompute.start()
+
+        // compute output metrics : cashflow, net result, return & rentability
+        metrics()
     }
 }
